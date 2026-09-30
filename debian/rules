@@ -22,7 +22,7 @@ USE_JEMALLOC="-Duse_jemalloc=enabled"
 endif
 
 %:
-	dh $@ --parallel --with systemd
+	dh $@
 
 override_dh_auto_configure:
 	dh_auto_configure -- $(USE_JEMALLOC)

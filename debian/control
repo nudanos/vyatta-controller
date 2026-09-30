@@ -1,8 +1,8 @@
 Source: vplane-controller
 Section: net
 Priority: optional
-Maintainer: Vyatta Package Maintainers <DL-vyatta-help@att.com>
-Build-Depends: debhelper (>= 9),
+Maintainer: NuDanOS Maintainers <jon@fernandez.tech>
+Build-Depends: debhelper-compat (= 13),
  dh-exec,
  libinih-dev,
  libmnl-dev,
@@ -14,8 +14,7 @@ Build-Depends: debhelper (>= 9),
  cpputest (>= 3.8),
  pkg-config,
  meson,
- debhelper (>= 9.20160709) | dh-systemd,
- bvnos-linux-libc-dev,
+ linux-libc-dev,
  libb64-dev,
  protobuf-c-compiler,
  protobuf-compiler,
@@ -27,11 +26,13 @@ Build-Depends: debhelper (>= 9),
  libprotobuf-dev,
  libvyatta-dataplane-proto-support,
  libjemalloc-dev <pkg.vyatta-controller.jemalloc>
-Standards-Version: 4.3.0
+Standards-Version: 4.7.2
+Rules-Requires-Root: no
+Vcs-Git: https://github.com/nudanos/vyatta-controller.git
+Vcs-Browser: https://github.com/nudanos/vyatta-controller
 
 Package: libvplaned-dev
 Architecture: any
-Priority: optional
 Section: libdevel
 Depends: ${misc:Depends},
  libvplaned1 (= ${binary:Version}),
@@ -62,7 +63,7 @@ Description: Vyatta dataplane controller
 Package: vplane-controller-dbg
 Architecture: any
 Section: debug
-Depends:
+Depends: 
  vplane-controller (= ${binary:Version}),
  ${misc:Depends}
 Description: Debugging symbols for vplane-controller
