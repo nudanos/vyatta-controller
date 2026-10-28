@@ -34,6 +34,7 @@ const char *parser_endpoint_publish_bound(void)
 }
 
 void
+// cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 parser_set_endpoint_request_bound(char *url)
 {
 }
@@ -94,12 +95,13 @@ parser_set_fabric_encrypt(bool encrypt)
 }
 
 void
+// cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 parser_set_fabric_address(struct ip_addr *addr)
 {
 }
 
 void
-parser_delete_fabric_address(struct ip_addr *addr)
+parser_delete_fabric_address(const struct ip_addr *addr)
 {
 }
 

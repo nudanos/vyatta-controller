@@ -185,7 +185,7 @@ vplaned_cstore_pb_request(zsock_t *sock, const char *path, void *cmd,
 	char *base64_outbuf;
 	char *base64_outbuf_ptr;
 	int count;
-	char *pb_str = "protobuf ";
+	const char *pb_str = "protobuf ";
 	int extra_len = strlen(pb_str);
 
 	if ((sock == NULL) ||

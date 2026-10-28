@@ -62,7 +62,7 @@ static void free_hwbinding(void *data)
 	free(hwb);
 }
 
-static enum binding_type name_to_binding_type(char *name)
+static enum binding_type name_to_binding_type(const char *name)
 {
 	if (!strcmp(name, "pci-address"))
 		return HWBINDING_PCIADDR;
@@ -107,7 +107,7 @@ static void parse_interface_cfg(const char *config)
 		if (p)
 			*p = '\0';
 
-		if (sscanf(line, "%s %s %s", name, type, value) != 3)
+		if (sscanf(line, "%8191s %8191s %8191s", name, type, value) != 3)
 			continue;
 
 		if (!isalpha(name[0]))
@@ -131,7 +131,7 @@ static void parse_interface_cfg(const char *config)
 		} else if (hwb->type == HWBINDING_PORT) {
 			hwb->u.port = atoi(value);
 		} else if (hwb->type == HWBINDING_MACADDR) {
-			struct ether_addr *eaddr;
+			const struct ether_addr *eaddr;
 
 			eaddr = ether_aton_r(value, &hwb->u.eaddr);
 			if (!eaddr)
@@ -222,7 +222,7 @@ void read_interface_cfg(const char *name)
 	reread_interface_cfg();
 }
 
-static const char *get_name_by_hwb(struct hwbinding *target)
+static const char *get_name_by_hwb(const struct hwbinding *target)
 {
 	struct hwbinding *hwb;
 

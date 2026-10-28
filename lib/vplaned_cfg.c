@@ -62,8 +62,7 @@ static void
 parse_json_dataplane(const char *json, int dpid, bool only_connected,
 		     bool first, zlist_t *list)
 {
-	json_object *jobj_root, *jobj_dataplanes, *jobj_dp, *jobj_id, *jobj_url,
-		    *jobj;
+	json_object *jobj_root, *jobj_dataplanes, *jobj_id, *jobj_url, *jobj;
 	int index, count = 0;
 	struct vplaned_dataplane *dp;
 
@@ -82,7 +81,8 @@ parse_json_dataplane(const char *json, int dpid, bool only_connected,
 	for (index = 0; index < count; index++) {
 		bool connected;
 
-		jobj_dp = json_object_array_get_idx(jobj_dataplanes, index);
+		json_object *jobj_dp =
+			json_object_array_get_idx(jobj_dataplanes, index);
 
 		if (!(json_object_object_get_ex(jobj_dp, "id", &jobj_id)
 		      && json_object_is_type(jobj_id, json_type_int)))
@@ -211,7 +211,7 @@ vplaned_dp_get_first(zsock_t *sock, int timeout, bool connected,
 static int
 compare_dpids(void *item1, void *item2)
 {
-	struct vplaned_dataplane *a = item1, *b = item2;
+	const struct vplaned_dataplane *a = item1, *b = item2;
 
 	if (a->id < b->id)
 		return -1;

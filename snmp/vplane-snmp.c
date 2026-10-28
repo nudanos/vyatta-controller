@@ -338,6 +338,7 @@ static int get_stat_idx(const char *oid)
 
 	*dot = '\0';
 	dot = strrchr(oid_copy, '.');
+	// cppcheck-suppress knownConditionTrueFalse ; reason: an OID with a single dot has none left once the last part is cut off
 	if (!dot) {
 		errno = EINVAL;
 		return -1;
@@ -547,7 +548,7 @@ static int get_stat_id_by_oid(const char *oid)
  */
 static int get_protocol(const char *oid)
 {
-	char *dot;
+	const char *dot;
 
 	dot = strrchr(oid, '.');
 	if (dot && isdigit(*(++dot))) {
@@ -1107,10 +1108,9 @@ int main(int argc, char **argv)
 
 			dbgmsg("option: GETNEXT %s", optarg);
 			if (strcmp(optarg, oid_base) == 0) {
-				const char suffix[] = ".3.1";
-				oid = alloca(strlen(optarg) + sizeof(suffix));
-				strcpy(oid, optarg);
-				strcat(oid, suffix);
+				snprintf(next_oid, sizeof(next_oid), "%s.3.1",
+					 optarg);
+				oid = next_oid;
 			} else if (in_sysstatstable(optarg)) {
 				oid = inc_oid(next_oid, optarg, sizeof(next_oid));
 			} else

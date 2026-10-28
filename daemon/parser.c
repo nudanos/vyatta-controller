@@ -222,7 +222,7 @@ parser_set_fabric_address(struct ip_addr *addr)
 }
 
 void
-parser_delete_fabric_address(struct ip_addr *addr)
+parser_delete_fabric_address(const struct ip_addr *addr)
 {
 	if ((addr->af == AF_INET) &&
 	    (!addr_cmp(addr, &controller_state.fab_addr_v4))) {

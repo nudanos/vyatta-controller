@@ -226,7 +226,6 @@ static int is_slave(const struct nlmsghdr *nlh, const char *kind,
 {
 	struct nlattr *tb[IFLA_MAX+1] = { NULL };
 	struct nlattr *linkinfo[IFLA_INFO_MAX+1] = { NULL };
-	const char *slave_kind;
 	int ret;
 
 	ret = mnl_attr_parse(nlh, sizeof(struct ifinfomsg), link_attr, tb);
@@ -242,7 +241,7 @@ static int is_slave(const struct nlmsghdr *nlh, const char *kind,
 			return 0;
 
 		if (linkinfo[IFLA_INFO_SLAVE_KIND]) {
-			slave_kind = mnl_attr_get_str(
+			const char *slave_kind = mnl_attr_get_str(
 				linkinfo[IFLA_INFO_SLAVE_KIND]);
 			if (!strncmp(slave_kind, kind, kind_len))
 				return 1;
@@ -405,16 +404,16 @@ route_debug(const struct nlmsghdr *nlh, const char *rkey, const char *action)
 			 mnl_attr_get_u32(tb[RTA_OIF]));
 	else if (tb[RTA_MULTIPATH]) {
 		void *vnhp;
-		char *sep = "";
+		const char *sep = "";
 		char *p;
-		size_t w, l;
+		size_t l;
 
 		p = oiflist;
 		l = sizeof(oiflist);
 		mnl_attr_for_each_nested(vnhp, tb[RTA_MULTIPATH]) {
-			struct rtnexthop *nhp = vnhp;
+			const struct rtnexthop *nhp = vnhp;
 
-			w = snprintf(p, l, "%s%d", sep, nhp->rtnh_ifindex);
+			size_t w = snprintf(p, l, "%s%d", sep, nhp->rtnh_ifindex);
 			sep = ",";
 			p += w;
 			l -= w;
@@ -463,6 +462,7 @@ typedef struct {
 /* Handle link up transition
  * with IPv4 ECMP routes come back from the dead.
  */
+// cppcheck-suppress constParameterCallback ; reason: czmq's zhash_foreach_fn type fixes the signature
 static int route_link_up(const char *key __unused, void *item, void *args)
 {
 	route_link_args_t *ra = args;
@@ -505,7 +505,7 @@ static int route_link_up(const char *key __unused, void *item, void *args)
 static int route_link_down(const char *key, void *item, void *args)
 {
 	route_link_args_t *ra = args;
-	nlmsg_t *nmsg = item;
+	const nlmsg_t *nmsg = item;
 	const struct nlmsghdr *nlh = nlmsg_data(nmsg);
 	const struct rtmsg *rtm = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *tb[RTA_MAX+1] = {};
@@ -686,7 +686,7 @@ static int netconf_attr(const struct nlattr *attr, void *data)
 static void
 update_netconf(zhash_t *hash, const char *key, nlmsg_t *nmsg)
 {
-	nlmsg_t *exist_nmsg = zhash_lookup(hash, key);
+	const nlmsg_t *exist_nmsg = zhash_lookup(hash, key);
 
 	if (exist_nmsg) {
 		const struct nlmsghdr *update_nlh = nlmsg_data(nmsg);
@@ -808,7 +808,7 @@ static zlistx_t *filter_list_head(snapshot_t *snap, const char *key,
 {
 	zlistx_t *list = NULL;
 	uint32_t chain_id, parent;
-	int ifindex;
+	unsigned int ifindex;
 
 	/* The key to a list head is first three parameters of the topic
 	 * string. This is also the same key that is used for the tc chain
@@ -1111,7 +1111,7 @@ static void snapshot_handle_team_msg(snapshot_t *self, nlmsg_t *nmsg)
 
 	/* There should be only one option/port per message at this point */
 	if (desc.cmd == TEAM_CMD_OPTIONS_GET) {
-		struct team_option_info *opt = zlist_first(desc.infolist);
+		const struct team_option_info *opt = zlist_first(desc.infolist);
 
 		if (!strcmp(opt->name, "enabled")) {
 			zhash_update(self->team_select, key, nmsg);
@@ -1127,7 +1127,7 @@ static void snapshot_handle_team_msg(snapshot_t *self, nlmsg_t *nmsg)
 			zhash_freefn(self->team_activeport, key, free_nmsg);
 		}
 	} else if (desc.cmd == TEAM_CMD_PORT_LIST_GET) {
-		struct team_port_info *opt = zlist_first(desc.infolist);
+		const struct team_port_info *opt = zlist_first(desc.infolist);
 
 		if (opt->removed) {
 			zhash_delete(self->team_port, key);

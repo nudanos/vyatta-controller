@@ -22,7 +22,7 @@
 #include <netinet/ether.h>
 
 #include "stubs.h"
-#include "cpputest_comparators.h"
+#include "cpputest_comparators.hpp"
 
 extern "C" {
 
@@ -39,6 +39,7 @@ static struct {
 } vplanes [VCOUNT];
 
 struct _snapshot {
+	// cppcheck-suppress unusedStructMember ; reason: an opaque snapshot_t stand-in needs a member
 	int dummy;
 };
 
@@ -67,6 +68,7 @@ void nlmsg_dump(const char *prefix, const nlmsg_t *self)
 	CPPUTEST_STUB_RET;
 }
 
+// cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 int nlmsg_send(nlmsg_t *self, zsock_t *socket)
 
 {
@@ -91,6 +93,7 @@ void nl_publisher_unlock(void)
 	pthread_mutex_unlock(&nl_mutex);
 }
 
+// cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 void config_send(zsock_t *socket, zframe_t * to, bool send_db_key)
 
 {
@@ -139,22 +142,22 @@ int port_create(const vplane_t *vp, uint32_t port, const char *ifname,
 	ifidx = mock_c()->getData("ifidx").value.intValue;
 	*ifindex = ifidx;
 	return mock_c()->actualCall("port_create")
-		->withPointerParameters("vp", (void *)vp)
+		->withPointerParameters("vp", const_cast<void *>(static_cast<const void *>(vp)))
 		->withIntParameters("port", port)
 		->withStringParameters("ifname", ifname)
-		->withPointerParameters("eth", (void *)eth)
+		->withPointerParameters("eth", const_cast<void *>(static_cast<const void *>(eth)))
 		->withStringParameters("driver", driver)
 		->withStringParameters("bus", bus)
 		->withIntParameters("if_flags", if_flags)
 		->withIntParameters("mtu", mtu)
-		->withPointerParameters("ifindex", (void *)ifindex)
+		->withPointerParameters("ifindex", ifindex)
 		->returnValue().value.intValue;
 }
 
 int port_delete(const vplane_t *vp, uint32_t port)
 {
 	return mock_c()->actualCall("port_delete")
-		->withPointerParameters("vp", (void *)vp)
+		->withPointerParameters("vp", const_cast<void *>(static_cast<const void *>(vp)))
 		->withIntParameters("port", port)
 		->returnValue().value.intValue;
 }
@@ -163,7 +166,7 @@ int port_state_change(const vplane_t *vp, uint32_t port, uint32_t ifindex,
 		      uint32_t operstate)
 {
 	return mock_c()->actualCall("port_state_change")
-		->withPointerParameters("vp", (void *)vp)
+		->withPointerParameters("vp", const_cast<void *>(static_cast<const void *>(vp)))
 		->withIntParameters("port", port)
 		->withIntParameters("ifindex", ifindex)
 		->withIntParameters("operstate", operstate)
@@ -174,7 +177,7 @@ int port_set_stats(const char *ifname, zframe_t *data, bool aggregate, int dp_id
 {
 	return mock_c()->actualCall("port_set_stats")
 		->withStringParameters("ifname", ifname)
-		->withPointerParameters("data", (void *)data)
+		->withPointerParameters("data", data)
 		->withBoolParameters("aggregate", aggregate)
 		->withIntParameters("dp_id", dp_id)
 		->returnValue().value.intValue;
@@ -195,14 +198,14 @@ int port_set_speed(const char *ifname, unsigned speed, unsigned duplex,
 int set_sg_count(struct sioc_sg_req *sgreq)
 {
 	return mock_c()->actualCall("set_sg_count")
-		->withPointerParameters("sgreq", (void *)sgreq)
+		->withPointerParameters("sgreq", sgreq)
 		->returnValue().value.intValue;
 }
 
 int set_sg6_count(struct sioc_sg_req6 *sgreq)
 {
 	return mock_c()->actualCall("set_sg6_count")
-		->withPointerParameters("sgreq", (void *)sgreq)
+		->withPointerParameters("sgreq", sgreq)
 		->returnValue().value.intValue;
 }
 
@@ -218,7 +221,7 @@ int zmsg_send(zmsg_t **m, void *dest)
 	int rc;
 
 	mock_c()->actualCall("zmsg_send")
-		->withPointerParameters("m", (void *)m)
+		->withPointerParameters("m", m)
 		->withPointerParameters("dest", dest);
 
 	rc = mock_c()->returnValue().value.intValue;
@@ -324,9 +327,9 @@ TEST_GROUP(request)
 		vplane_teardown();
 		int i;
 		for (i = 0; i < VCOUNT; i++) {
-			free((char *)vplanes[i].uuid);
+			free(const_cast<char *>(vplanes[i].uuid));
 			vplanes[i].uuid = NULL;
-			free((char *)vplanes[i].ip);
+			free(const_cast<char *>(vplanes[i].ip));
 			vplanes[i].ip = NULL;
 		}
 		mock().enable();
@@ -551,14 +554,13 @@ TEST(request, funny_if_types)
 	char ifname[IFNAMSIZ];
 	struct ip_addr raddr;
 	zmsg_t *reply;
-	vplane_t *vp;
 
 	raddr.ip.v4.s_addr = inet_addr(vplanes[id].ip);
 	raddr.af = AF_INET;
 
 	index = 0;
 	while (if_test_params[index].driver != NULL) {
-		vp = vplane_findbyuuid(vplanes[id].uuid);
+		vplane_t *vp = vplane_findbyuuid(vplanes[id].uuid);
 		CHECK(vp != NULL);
 
 		snprintf(json2, sizeof(json2), 
@@ -877,7 +879,7 @@ TEST(request, link)
 	char stats[32];
 	int ifindex = 99;
 	char ifname[IFNAMSIZ];
-	zmsg_t *reply;
+	const zmsg_t *reply;
 	vplane_t *vp;
 
 	raddr.ip.v4.s_addr = inet_addr(vplanes[id].ip);

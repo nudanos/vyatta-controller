@@ -75,16 +75,11 @@ static zsock_t *open_controller_dealer()
 static void write_msg(zmsg_t *msg, FILE *f)
 {
 	zframe_t *nlm = zmsg_first(msg);
-	void *data = zframe_data(nlm);
-	size_t size = zframe_size(nlm);
-	size_t sts;
 
 	if (nlm == NULL)
 		return;
 
-	data = zframe_data(nlm);
-	size = zframe_size(nlm);
-	sts = fwrite(data, size, 1, f);
+	size_t sts = fwrite(zframe_data(nlm), zframe_size(nlm), 1, f);
 	if (sts != 1)
 		perror("fwrite()");
 }
@@ -153,7 +148,7 @@ static int snapshot_ignore_route(zmsg_t *zmsg, uint32_t ifindex)
 		void *vnhp;
 
 		mnl_attr_for_each_nested(vnhp, tb[RTA_MULTIPATH]) {
-			struct rtnexthop *nhp = vnhp;
+			const struct rtnexthop *nhp = vnhp;
 
 			if (ifindex == (uint32_t)nhp->rtnh_ifindex)
 				return 0;
@@ -244,7 +239,7 @@ static int snapshot(const char *path, uint32_t ifindex)
 	}
 
 	zsock_destroy(&zsock);
-	if (fclose(fp) < 0)
+	if (fp != NULL && fclose(fp) < 0)
 		perror("fclose()");
 
 	return sts;
@@ -280,7 +275,7 @@ static int dump_netlink(int ifindex)
 }
 
 static
-bool is_protobuf(char *p)
+bool is_protobuf(const char *p)
 {
 	/* We likely need a better heuristic. */
 	return !isprint(*p);
@@ -289,7 +284,8 @@ bool is_protobuf(char *p)
 static
 void print_string(char *string, int len)
 {
-	char *p = string;
+	const char *p = string;
+
 	while (len--) {
 		if (isprint(*p))
 			printf("%c", *p);
@@ -311,7 +307,7 @@ enum WireType {
 };
 
 static
-int decode_varint(char *p, int len, long *varintp)
+int decode_varint(const char *p, int len, long *varintp)
 {
 	unsigned long varint = 0;
 	unsigned int shift = 0;
@@ -337,21 +333,18 @@ static
 void decode_pb(char *msg, int cmdlen)
 {
 	char *p = msg;
-	int wire_type;
-	unsigned int field_num;
 	long varint;
 	long fixed64;
 	int fixed32;
 	long sublen;
-	int consumed;
 
 	while (cmdlen > 0) {
-		consumed = decode_varint(p, cmdlen, &varint);
+		int consumed = decode_varint(p, cmdlen, &varint);
 		p += consumed;
 		cmdlen -= consumed;
 
-		wire_type = varint & 0x7;
-		field_num = varint >> 3;
+		int wire_type = varint & 0x7;
+		unsigned int field_num = varint >> 3;
 
 		switch (wire_type) {
 		case Varint:

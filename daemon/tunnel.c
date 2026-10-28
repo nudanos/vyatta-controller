@@ -169,10 +169,9 @@ static int tun_get_flags(tun_t *nl, unsigned int ifindex,
 		return -1;
 	}
 	ssize_t len;
-	int ret;
 
 	while ((len = mnl_socket_recvfrom(nl, buf, sizeof(buf))) > 0) {
-		ret = mnl_cb_run(buf, len, seq, portid,
+		int ret = mnl_cb_run(buf, len, seq, portid,
 				 process_nl_get_flags, flags);
 		if (ret < MNL_CB_STOP) {
 			err("get flags(%u) error: %s", ifindex,

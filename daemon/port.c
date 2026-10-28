@@ -346,7 +346,7 @@ int port_set_speed(const char *ifname, unsigned speed,
 	ecmd.cmd = ETHTOOL_SSET;
 	if (!preserve_link_modes) {
 		ecmd.advertising = advertised;
-		ecmd.autoneg = advertised & ADVERTISED_Autoneg ?
+		ecmd.autoneg = (advertised & ADVERTISED_Autoneg) ?
 							AUTONEG_ENABLE :
 							AUTONEG_DISABLE;
 	}
@@ -391,7 +391,7 @@ struct dp_stats {
  * Add two blocks of interface statistics
  */
 static void add_if_stats(struct rtnl_link_stats64 *stats,
-			struct rtnl_link_stats64 *inc)
+			const struct rtnl_link_stats64 *inc)
 {
 	stats->rx_packets += inc->rx_packets;
 	stats->tx_packets += inc->tx_packets;
@@ -408,7 +408,7 @@ static void add_if_stats(struct rtnl_link_stats64 *stats,
  * Subtract two blocks of interface statistics
  */
 static void sub_if_stats(struct rtnl_link_stats64 *stats,
-			struct rtnl_link_stats64 *dec)
+			const struct rtnl_link_stats64 *dec)
 {
 	stats->rx_packets -= dec->rx_packets;
 	stats->tx_packets -= dec->tx_packets;
@@ -469,8 +469,8 @@ static void aggregate_if_stats(const char *ifname, int dp_id,
 			       struct rtnl_link_stats64 *stats)
 {
 	zlistx_t *if_stats_list;
-	struct dp_stats *cache_stats, *dp_stats = NULL, *total_stats = NULL,
-		*other_stats = NULL;
+	struct dp_stats *cache_stats, *dp_stats = NULL, *total_stats = NULL;
+	const struct dp_stats *other_stats = NULL;
 
 	/* Create cache hash table if it doesn't exist */
 	if (if_stats == NULL) {

@@ -38,6 +38,7 @@ static const char copyright[]
 	= "Copyright (c) 2012-2016 by Brocade Communications Systems, Inc.";
 static int debug;
 
+// cppcheck-suppress constParameterCallback ; reason: editline's EL_PROMPT callback type fixes the signature
 static const char *prompt(EditLine *e __attribute__((unused)))
 {
 	return "vplsh# ";
@@ -184,7 +185,7 @@ static int shell_mode(zsock_t *sock)
 
 static int cmd_mode(zsock_t *sock, zlist_t *cmd_list)
 {
-	char *c;
+	const char *c;
 
 	c = zlist_first(cmd_list);
 	while (!zsys_interrupted && c) {

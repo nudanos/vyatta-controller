@@ -75,22 +75,17 @@ sub lookup_path {
     return @nodes;
 }
 
-my $f;
-
 my $config = shift;
 exit 1 unless $config;
 
-my $xcp = new XorpConfigParser();
+my $xcp = XorpConfigParser->new();
 $xcp->parse($config);
 
-open $f, '>', $interface_conf
-  or die "can't open $interface_conf";
-
-printf $f "# Automatically generated file; DO NOT EDIT.\n";
+my @lines = ("# Automatically generated file; DO NOT EDIT.\n");
 
 foreach my $intf ( lookup_path( $xcp, 'interfaces dataplane' ) ) {
     ( undef, my $ifname ) = split( ' ', $intf->{name} );
-    $ifname =~ s/^dp\d+//;
+    $ifname =~ s/^dp\d+//x;
 
     foreach my $hardware ( find_nodes( $xcp, $intf, 'hardware' ) ) {
         my $dev_port;
@@ -114,19 +109,18 @@ foreach my $intf ( lookup_path( $xcp, 'interfaces dataplane' ) ) {
         }
 
         if ( defined $hwbinding_type ) {
-            printf $f "%s\t%s\t%s", $ifname, $hwbinding_type, $hwbinding_value;
-            if ( defined $pci_function ) {
-                printf $f ".%d", $pci_function;
-            }
-            if ( defined $dev_port ) {
-                printf $f "@%d", $dev_port;
-            }
-            printf $f "\n";
+            my $line = sprintf "%s\t%s\t%s", $ifname, $hwbinding_type, $hwbinding_value;
+            $line .= sprintf ".%d", $pci_function if defined $pci_function;
+            $line .= sprintf "@%d", $dev_port     if defined $dev_port;
+            push @lines, "$line\n";
         }
 
     }
 }
 
-close $f;
+open my $f, '>', $interface_conf
+  or die "can't open $interface_conf: $!\n";
+print {$f} @lines or die "can't write $interface_conf: $!\n";
+close $f          or die "can't write $interface_conf: $!\n";
 
 exit 0;

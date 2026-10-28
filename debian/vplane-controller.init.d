@@ -24,6 +24,7 @@ PIDFILE=/var/run/vyatta/vplaned.pid
 CONFILE=/etc/vyatta/controller.conf
 LOGFILE=/var/log/vyatta/$NAME.log
 
+# shellcheck disable=SC1091 # reason: /etc/default/vyatta comes from another package
 source /etc/default/vyatta
 
 : "${vyatta_prefix:=/opt/vyatta}"
@@ -32,6 +33,7 @@ source /etc/default/vyatta
 export PATH
 DAEMON=${vyatta_sbindir}/vplaned
 
+# shellcheck disable=SC1091 # reason: provided by lsb-base on the target, not in this tree
 . /lib/lsb/init-functions
 
 [ -d /var/run/vyatta ] || mkdir -p /var/run/vyatta

@@ -82,7 +82,7 @@ static char *igmp_socket_hash_key(uint32_t vrf_id, char *key_buf,
 				  uint32_t buf_size)
 {
 	uint32_t written;
-	written = snprintf(key_buf, buf_size, "%d", vrf_id);
+	written = snprintf(key_buf, buf_size, "%u", vrf_id);
 	if (written >= buf_size)
 		return NULL;
 
@@ -162,7 +162,7 @@ int mcast_close_stats_socket(uint32_t vrf_id, uint32_t af)
 	const char *key;
 	char key_buf[MAX_MRT_HASH_KEY_LEN];
 	zhash_t *sockets_hash_table;
-	int *igmp_socket;
+	const int *igmp_socket;
 
 	switch (af) {
 	case AF_INET:
@@ -200,8 +200,6 @@ int set_sg_count(struct sioc_sg_req *sgreq, uint32_t vrf_id)
 	int *igmpv4_socket;
 	const char *key;
 	char key_buf[MAX_MRT_HASH_KEY_LEN];
-	char source[INET_ADDRSTRLEN];
-	char group[INET_ADDRSTRLEN];
 
 	key = igmp_socket_hash_key(vrf_id, key_buf, sizeof(key_buf));
 	if (!key)
@@ -212,6 +210,9 @@ int set_sg_count(struct sioc_sg_req *sgreq, uint32_t vrf_id)
 		igmpv4_socket = calloc(1, sizeof(int));
 		if (!igmpv4_socket)
 			return 1;
+
+		char source[INET_ADDRSTRLEN];
+		char group[INET_ADDRSTRLEN];
 
 		inet_ntop(AF_INET, &sgreq->src, source, sizeof(source));
 		inet_ntop(AF_INET, &sgreq->grp, group, sizeof(group));
@@ -255,8 +256,6 @@ int set_sg6_count(struct sioc_sg_req6 *sgreq, uint32_t vrf_id)
 	int *igmpv6_socket;
 	const char *key;
 	char key_buf[MAX_MRT_HASH_KEY_LEN];
-	char source[INET6_ADDRSTRLEN];
-	char group[INET6_ADDRSTRLEN];
 
 	key = igmp_socket_hash_key(vrf_id, key_buf, sizeof(key_buf));
 	if (!key)
@@ -267,6 +266,9 @@ int set_sg6_count(struct sioc_sg_req6 *sgreq, uint32_t vrf_id)
 		igmpv6_socket = calloc(1, sizeof(int));
 		if (!igmpv6_socket)
 			return 1;
+
+		char source[INET6_ADDRSTRLEN];
+		char group[INET6_ADDRSTRLEN];
 
 		inet_ntop(AF_INET6, &sgreq->src.sin6_addr,
 			  source, sizeof(source));

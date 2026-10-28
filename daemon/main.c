@@ -252,7 +252,7 @@ static void monitor_netlink(const struct nlmsghdr *nlh)
 static int process_netlink_rtnl(const struct nlmsghdr *nlh, void *arg)
 {
 	char topic[1024];
-	char *ifname = NULL;
+	const char *ifname = NULL;
 	bool publish_intf_cmds = false;
 	uint32_t ifindex = 0;
 
@@ -440,7 +440,7 @@ out:
 static int process_genetlink_family(const struct nlmsghdr *nlh,
 				    void *arg __unused)
 {
-	struct genlmsghdr *ghdr = NLMSG_DATA(nlh);
+	const struct genlmsghdr *ghdr = NLMSG_DATA(nlh);
 	struct nlattr *tb[CTRL_ATTR_MAX+1] = { NULL };
 	const char *family_name;
 	const char *group;
@@ -708,7 +708,6 @@ static void dump_kernel(struct mnl_socket *nl, int family, int type,
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
-	struct tcmsg *tc;
 
 	nlh->nlmsg_type = type;
 	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
@@ -721,7 +720,8 @@ static void dump_kernel(struct mnl_socket *nl, int family, int type,
 		ifi->ifi_family = family;
 	} else if (type == RTM_GETQDISC  || type == RTM_GETCHAIN ||
 		   type == RTM_GETTFILTER) {
-		tc = mnl_nlmsg_put_extra_header(nlh, sizeof(*tc));
+		struct tcmsg *tc = mnl_nlmsg_put_extra_header(nlh, sizeof(*tc));
+
 		tc->tcm_family = family;
 
 		if (type == RTM_GETCHAIN || type == RTM_GETTFILTER) {
@@ -944,7 +944,7 @@ static void parse_args(int argc, char **argv)
 			pidfile = optarg;
 			break;
 		case 'u': {
-			struct passwd *pw = getpwnam(optarg);
+			const struct passwd *pw = getpwnam(optarg);
 
 			if (!pw) {
 				fprintf(stderr, "unknown user '%s'\n", optarg);
@@ -954,7 +954,7 @@ static void parse_args(int argc, char **argv)
 			break;
 		}
 		case 'g': {
-			struct group *gr = getgrnam(optarg);
+			const struct group *gr = getgrnam(optarg);
 			if (!gr) {
 				fprintf(stderr, "unknown group '%s'\n", optarg);
 				exit(1);
@@ -1013,7 +1013,7 @@ static void netlink_listener(struct mnl_socket *listen_nl)
 {
 	int i;
 	char rcvbufs[NL_MAXMSGS][NL_MAXMSGSIZE];
-	struct mmsghdr msgvec[NL_MAXMSGS];
+	struct mmsghdr msgvec[NL_MAXMSGS] = {};
 	struct iovec iovs[NL_MAXMSGS];
 	struct sockaddr_nl addr[NL_MAXMSGS];
 
@@ -1042,7 +1042,7 @@ static void netlink_listener(struct mnl_socket *listen_nl)
 	}
 
 	for (i = 0; i < vlen; i++) {
-		struct msghdr *msg = &msgvec[i].msg_hdr;
+		const struct msghdr *msg = &msgvec[i].msg_hdr;
 		ssize_t len = msgvec[i].msg_len;
 		char *rcvbuf = rcvbufs[i];
 
@@ -1094,7 +1094,7 @@ static void xfrm_listener(struct mnl_socket *xfrm_nl)
 static void enable_snapshots(void)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
-	struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
+	const struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
 	const char *topic = "INIT COMPLETE";
 	nlmsg_t *nmsg = nlmsg_new(topic, ++msg_seqno, nlh, nlh->nlmsg_len);
 
@@ -1360,7 +1360,7 @@ static void genl_family_registered_team(struct mnl_socket *team_nl)
 static int process_genetlink_gectrl(const struct nlmsghdr *nlh,
 				    void *arg __unused)
 {
-	struct genlmsghdr *ghdr = NLMSG_DATA(nlh);
+	const struct genlmsghdr *ghdr = NLMSG_DATA(nlh);
 
 	if (ghdr->cmd != CTRL_CMD_NEWFAMILY && ghdr->cmd != CTRL_CMD_DELFAMILY)
 		return MNL_CB_OK;

@@ -52,8 +52,6 @@ void __panic(const char *funcname, const char *fmt, ...)
 
 int main(int argc, char *argv [])
 {
-	char filter[128];
-
 	if (strcmp(argv[1], "-d") == 0) {
 		++debug;
 		--argc, ++argv;

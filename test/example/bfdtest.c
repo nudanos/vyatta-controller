@@ -110,10 +110,10 @@ int main(int argc, char **argv)
 	uint32_t det_mult = DET_MULT;
 	int flag;
 	bool monitor = false;
-	char *src = NULL, *dest = NULL, *intf = NULL, *passwd = NULL;
+	const char *src = NULL, *dest = NULL, *passwd = NULL;
+	char *intf = NULL;
 	char cstore_key[100];
 	char cstore_cmd[100];
-	char auth[30] = {0};
 	zsock_t *sub;
 	bool add = false;
 	bool del = false;
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 
 	if (add || del)
 		printf("%s%s session %u from %s to %s, "
-		       "via intf %s(%d) with passwd %s\n",
+		       "via intf %s(%u) with passwd %s\n",
 		       add ? "Update" : "", del ? "Delete" : "",
 		       clid, src, dest,
 		       intf ? intf : "none",
@@ -194,9 +194,11 @@ int main(int argc, char **argv)
 		snprintf(cstore_key, sizeof(cstore_key),
 			 "bfdsess %u %u %s %s", ifi, vrfid, src, dest);
 	if (add) {
+		char auth[30] = {0};
+
 		if (passwd)
 			snprintf(auth, sizeof(auth),
-				 " 1 %zd 1 %s\n", strlen(passwd), passwd);
+				 " 1 %zu 1 %s\n", strlen(passwd), passwd);
 
 		snprintf(cstore_cmd, sizeof(cstore_cmd),
 			 "bfd add %u %u %s %s %u %u %u %u %u%s",

@@ -12,7 +12,7 @@
 #include <linux/rtnetlink.h>
 
 #include "stubs.h"
-#include "cpputest_comparators.h"
+#include "cpputest_comparators.hpp"
 
 extern "C" {
 
@@ -37,7 +37,7 @@ void fsnotify_add_redirects_watchers(void)
 
 static struct mynlmsg *mynlmsg_alloc(int nlmsg_type, uint32_t ifindex, int id)
 {
-	struct mynlmsg *msg = (struct mynlmsg *)calloc(1, sizeof(*msg));
+	struct mynlmsg *msg = static_cast<struct mynlmsg *>(calloc(1, sizeof(*msg)));
 	struct nlmsghdr *nlh;
 	struct nlmsghdr _nlh;
 	char buf[1024];
@@ -47,7 +47,7 @@ static struct mynlmsg *mynlmsg_alloc(int nlmsg_type, uint32_t ifindex, int id)
 		return NULL;
 
 	_nlh.nlmsg_type = nlmsg_type;
-	snprintf(buf, sizeof(buf), "%s %d %d",
+	snprintf(buf, sizeof(buf), "%s %u %d",
 		 nlmsg_type_name_rtnl(&_nlh),
 		 ifindex, id);
 	msg->topic = strdup(buf);
@@ -55,7 +55,12 @@ static struct mynlmsg *mynlmsg_alloc(int nlmsg_type, uint32_t ifindex, int id)
 	snprintf(buf, sizeof(buf), "netlink data %s", msg->topic);
 
 	sz = NLMSG_LENGTH(strlen(buf)) + 1;
-	nlh = (struct nlmsghdr *)malloc(sz);
+	nlh = static_cast<struct nlmsghdr *>(malloc(sz));
+	if (nlh == NULL) {
+		free(msg->topic);
+		free(msg);
+		return NULL;
+	}
 	memset(nlh, 0, sz);
 	nlh->nlmsg_len = sz;
 	nlh->nlmsg_type = nlmsg_type;
@@ -79,9 +84,9 @@ static nlmsg_t *find_nlmsg(const struct mynlmsg *msg, zlist_t *list)
 {
 	nlmsg_t *nlmsg;
 
-	for (nlmsg = (nlmsg_t *)zlist_first(list);
+	for (nlmsg = static_cast<nlmsg_t *>(zlist_first(list));
 	     nlmsg != NULL;
-	     nlmsg = (nlmsg_t *)zlist_next(list)) {
+	     nlmsg = static_cast<nlmsg_t *>(zlist_next(list))) {
 		if ((strcmp(msg->topic, nlmsg_key(nlmsg)) == 0) &&
 		    (memcmp(msg->nlh,
 			    nlmsg_data(nlmsg),
@@ -138,7 +143,7 @@ TEST(nlmsg, create_delete)
 	CHECK(msg1 != NULL);
 	CHECK(nlmsg_seqno(msg1) == msg_seqno);
 	CHECK(strcmp(nlmsg_key(msg1), topic) == 0);
-	CHECK(strcmp((const char *)nlmsg_data(msg1), data) == 0);
+	CHECK(strcmp(static_cast<const char *>(nlmsg_data(msg1)), data) == 0);
 	nlmsg_free(msg1);
 
 	msg1 = nlmsg_new(topic, ++msg_seqno, data, strlen(data)+1);
@@ -149,7 +154,7 @@ TEST(nlmsg, create_delete)
 	CHECK(msg2 != NULL);
 	CHECK(nlmsg_seqno(msg2) == msg_seqno);
 	CHECK(strcmp(nlmsg_key(msg2), topic) == 0);
-	CHECK(strcmp((const char *)nlmsg_data(msg2), data) == 0);
+	CHECK(strcmp(static_cast<const char *>(nlmsg_data(msg2)), data) == 0);
 
 	nlmsg_free(msg1);
 	CHECK(strcmp(nlmsg_key(msg2), topic) == 0);
@@ -215,18 +220,18 @@ TEST(nlmsg, pending)
 	 * arrival of NETCONF & ADDR messages before the associated
 	 * NEWLINK message.
 	 */
-	for (msg = (struct mynlmsg *)zlist_first(msglist);
+	for (msg = static_cast<struct mynlmsg *>(zlist_first(msglist));
 	     msg != NULL;
-	     msg = (struct mynlmsg *)zlist_next(msglist)) {
+	     msg = static_cast<struct mynlmsg *>(zlist_next(msglist))) {
 		nlmsg_pending_add(msg->topic, msg->nlh, msg->ifindex);
 	}
 
 	CHECK(zlist_size(nlmsg_pending_list()) == count);
 
-	for (msg = (struct mynlmsg *)zlist_first(msglist);
+	for (msg = static_cast<struct mynlmsg *>(zlist_first(msglist));
 	     msg != NULL;
-	     msg = (struct mynlmsg *)zlist_next(msglist)) {
-		nlmsg_t *nlmsg;
+	     msg = static_cast<struct mynlmsg *>(zlist_next(msglist))) {
+		const nlmsg_t *nlmsg;
 
 		nlmsg = find_nlmsg(msg, nlmsg_pending_list());
 		CHECK(nlmsg != NULL);
@@ -239,9 +244,9 @@ TEST(nlmsg, pending)
 	nlmsg_ifindex_del(ifindex1);
 	CHECK(zlist_size(nlmsg_pending_list()) == 0);
 
-	for (msg = (struct mynlmsg *)zlist_first(msglist);
+	for (msg = static_cast<struct mynlmsg *>(zlist_first(msglist));
 	     msg != NULL;
-	     msg = (struct mynlmsg *)zlist_next(msglist)) {
+	     msg = static_cast<struct mynlmsg *>(zlist_next(msglist))) {
 		nlmsg_pending_add(msg->topic, msg->nlh, msg->ifindex);
 	}
 
@@ -255,9 +260,9 @@ TEST(nlmsg, pending)
 	/*
 	 * Have all the messages been "published"?
 	 */
-	for (msg = (struct mynlmsg *)zlist_first(msglist);
+	for (msg = static_cast<struct mynlmsg *>(zlist_first(msglist));
 	     msg != NULL;
-	     msg = (struct mynlmsg *)zlist_next(msglist)) {
+	     msg = static_cast<struct mynlmsg *>(zlist_next(msglist))) {
 		nlmsg_t *nlmsg;
 
 		nlmsg = find_nlmsg(msg, propagate_list);
@@ -268,7 +273,7 @@ TEST(nlmsg, pending)
 
 	CHECK(zlist_size(propagate_list) == 0);
 
-	while ((msg = (struct mynlmsg *)zlist_pop(msglist)) != NULL)
+	while ((msg = static_cast<struct mynlmsg *>(zlist_pop(msglist))) != NULL)
 	       mynlmsg_free(&msg);
 
 	CHECK(zlist_size(msglist) == 0);

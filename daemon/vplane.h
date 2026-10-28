@@ -61,7 +61,7 @@ const vplane_t *vplane_findbyid(int id);
 typedef void vplane_iter_func_t(const vplane_t *vp, void *arg);
 
 /*  Walker function for all vplanes */
-void vplane_walk_all(vplane_iter_func_t func, void *arg);
+void vplane_walk_all(vplane_iter_func_t *func, void *arg);
 
 /*
  * Obtain the name and index associated with an interface on a specific
@@ -97,7 +97,7 @@ int vplane_iface_set_delpend(const vplane_t *vp, uint32_t ifn, bool delpend);
  */
 typedef void vplane_iface_iter_func_t(const vplane_t *vp, uint32_t ifn,
 				      void *arg);
-void vplane_iface_iterate(const vplane_t *vp, vplane_iface_iter_func_t func,
+void vplane_iface_iterate(const vplane_t *vp, vplane_iface_iter_func_t *func,
 			  void *arg);
 
 /*

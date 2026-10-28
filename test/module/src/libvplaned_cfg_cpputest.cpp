@@ -11,7 +11,7 @@
 #include "CppUTestExt/MockSupport.h"
 
 #include <czmq.h>
-#include "cpputest_comparators.h"
+#include "cpputest_comparators.hpp"
 #include "json.h"
 
 extern "C" {
@@ -234,7 +234,7 @@ TEST(libvplaned_cfg, dataplane)
 	CHECK(vpd_server("GETVPCONFIG", "OK", vpd_dpconfig2));
 
 	CHECK(vplaned_dp_get_list(s, VPD_TIMEOUT, true, list) == 0);
-	dp = (struct vplaned_dataplane *)zlist_pop(list);
+	dp = static_cast<struct vplaned_dataplane *>(zlist_pop(list));
 	CHECK(dp != NULL);
 	CHECK(zlist_size(list) == 0);
 	CHECK(vplaned_dp_id(dp) == 1);

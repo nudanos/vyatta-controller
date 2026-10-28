@@ -111,7 +111,7 @@ extract_topic(const char *line)
 	topic[0] = '\0';
 	/* For now... grab first two entries as topic */
 	/* NEED to fix this up so that topic is pulled from config cmd */
-	char *token = strtok_r((char *)line, " ", &tmp);
+	const char *token = strtok_r((char *)line, " ", &tmp);
 	int ct = 0;
 	while (token != NULL && ct < 2) {
 		strcat(topic, token);

@@ -10,7 +10,7 @@
 #include "CppUTestExt/MockSupport.h"
 
 #include <czmq.h>
-#include "cpputest_comparators.h"
+#include "cpputest_comparators.hpp"
 #include "json.h"
 
 extern "C" {
@@ -100,10 +100,7 @@ jsonstr_equal(const char *jstr1, const char *jstr2)
 	if (jstr1 == jstr2)
 		return true;
 
-	if (jstr1 == NULL)
-		return (jstr2 == NULL);
-
-	if (jstr2 == NULL)
+	if (jstr1 == NULL || jstr2 == NULL)
 		return false;
 
 	json_object *jobj1 = json_tokener_parse(jstr1);

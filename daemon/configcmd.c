@@ -104,15 +104,15 @@ int publish_config_cmd(command_node_t *cmd, uint64_t *msg_seq)
 		return -1;
 
 	if (cmd->_node->_topic != NULL) {
-		if (cmd->_ephemeral != NULL) {
-			publish_cmd(cmd->_node->_topic, ++(*msg_seq),
-				    cmd->_ephemeral, cmd->_node->_bin);
-			free(cmd->_ephemeral);
-		} else {
-			publish_cmd(cmd->_node->_topic, ++(*msg_seq),
-				    cmd->_node->_value, cmd->_node->_bin);
-		}
+		const char *line = cmd->_ephemeral != NULL ?
+			cmd->_ephemeral : cmd->_node->_value;
+
+		publish_cmd(cmd->_node->_topic, ++(*msg_seq), line,
+			    cmd->_node->_bin);
 	}
+	/* the ephemeral (delete) text is used once, published or not */
+	free(cmd->_ephemeral);
+	cmd->_ephemeral = NULL;
 	cmd->_node->_seq = *msg_seq;	/* save sequence number for resyncing */
 	return 0;
 }
@@ -129,6 +129,7 @@ void add_cmd(config_node_t *config_node, const char *ephemeral)
 		return;
 	}
 	cmd->_node = config_node;
+	cmd->_db_key = NULL;
 
 	if (ephemeral == NULL)
 		cmd->_ephemeral = NULL;
@@ -139,6 +140,7 @@ void add_cmd(config_node_t *config_node, const char *ephemeral)
 		_root_cmd_coll = zlist_new();
 
 	zlist_append(_root_cmd_coll, (void *)cmd);
+// cppcheck-suppress memleak ; reason: the command and its strings are owned by the zlist and freed when dispatched
 }
 
 /*
@@ -185,6 +187,7 @@ static void walk_db(struct lh_table *db, zlist_t **coll, struct bstr *db_key)
 				*coll = zlist_new();
 
 			zlist_append(*coll, (void *)cmd);
+		// cppcheck-suppress memleak ; reason: the command and its key are owned by the resync zlist, freed by flush_resync
 		}
 		walk_db(config_node->_hash, coll, db_key);
 

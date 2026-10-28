@@ -106,7 +106,7 @@ static int get_devname(const struct port_info *pinfo,
 			err("ACPI slot information not found");
 			return -1;
 		}
-		snprintf(ifname, sz, "p%dp%u", pinfo->slot, loc.function + 1);
+		snprintf(ifname, sz, "p%dp%d", pinfo->slot, loc.function + 1);
 		return 0;
 	}
 

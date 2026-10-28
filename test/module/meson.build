@@ -175,3 +175,21 @@ vplane_test = executable(
 )
 
 test('Vplaned', vplane_test)
+configcmd_test = executable(
+        'configcmd_test',
+        sources: [
+                '../../daemon/configcmd.c',
+                '../../daemon/bstr.c',
+                'src/configcmd_cpputest.cpp',
+                common_test_sources
+        ],
+        include_directories: [common_test_includes],
+        dependencies: [
+                cpputest_dep,
+                czmq_dep,
+                json_dep,
+        ],
+        cpp_args : '-Wno-unused-parameter'
+)
+
+test('Config commands', configcmd_test)

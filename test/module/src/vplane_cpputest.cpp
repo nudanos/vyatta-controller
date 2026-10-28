@@ -16,7 +16,7 @@
 #include <syslog.h>
 #include <linux/if.h>
 
-#include "cpputest_comparators.h"
+#include "cpputest_comparators.hpp"
 
 extern "C" {
 
@@ -37,6 +37,7 @@ int port_state_change(const vplane_t *vp, uint32_t port, uint32_t ifindex,
 	return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 int zmsg_popu32(zmsg_t *msg, uint32_t *p)
 {
 	return 0;
@@ -79,9 +80,9 @@ TEST_GROUP(vplane)
 		vplane_teardown();
 		int i;
 		for (i = 0; i < VCOUNT; i++) {
-			free((char *)vplanes[i].uuid);
+			free(const_cast<char *>(vplanes[i].uuid));
 			vplanes[i].uuid = NULL;
-			free((char *)vplanes[i].ip);
+			free(const_cast<char *>(vplanes[i].ip));
 			vplanes[i].ip = NULL;
 			zframe_destroy(&vplanes[i].session);
 		}
@@ -295,12 +296,11 @@ TEST(vplane, connect)
 	vplane_cfg_end();
 
 	for (i = 0; i < VCOUNT; i++) {
-		vplane_t *vp;
+		vplane_t *found = vplane_findbyuuid(vplanes[i].uuid);
 
-		vp = vplane_findbyuuid(vplanes[i].uuid);
-		CHECK(vp != NULL);
-		CHECK(vplane_connect(vp, vplanes[i].session) == 0);
-		vplanes[i].vp = vp;
+		CHECK(found != NULL);
+		CHECK(vplane_connect(found, vplanes[i].session) == 0);
+		vplanes[i].vp = found;
 	}
 
 	for (i = 0; i < VCOUNT; i++) {
@@ -332,7 +332,7 @@ TEST(vplane, connect)
 
 void vptest_interface_count(const vplane_t *vp, uint32_t ifn, void *arg)
 {
-	int *count = (int *)arg;
+	int *count = static_cast<int *>(arg);
 
 	CHECK(vplane_iface_get_ifindex(vp, ifn) != 0);
 	(*count)++;
@@ -385,7 +385,7 @@ TEST(vplane, interface)
 	CHECK(vplane_iface_add(vp, 3, 0, "cookie1") == 0);
 	CHECK(vplane_iface_get_ifindex(vp, 3) == 0);
 	ifname = vplane_iface_get_ifname(vp, 3);
-	CHECK(vplane_iface_set_cookie(vp, 3, (void *)ifname) == 0);
+	CHECK(vplane_iface_set_cookie(vp, 3, const_cast<char *>(ifname)) == 0);
 	CHECK(vplane_iface_get_cookie(vp, 3) == ifname);
 	CHECK(vplane_iface_add(vp, 3, 1003, ifname) == 0);
 	CHECK(streq("cookie1", vplane_iface_get_ifname(vp, 3)));
@@ -420,7 +420,6 @@ TEST(vplane, address)
 	struct ip_addr addr;
 	vplane_t *vp;
 
-	addr.af = AF_INET;
 	CHECK(inet_pton(AF_INET, v4addrstr, &addr.ip) == 1);
 
 	vplane_cfg_begin();
@@ -437,9 +436,8 @@ TEST(vplane, address)
 	 * So that's created a vplane with a particular IPv4 address,
 	 * now re-configure that vplane with a V6 address.
 	 */
-	vplane_t *oldvp = vp;
+	const vplane_t *oldvp = vp;
 
-	addr.af = AF_INET6;
 	CHECK(inet_pton(AF_INET6, v6addrstr, &addr.ip) == 1);
 
 	vplane_cfg_begin();
@@ -460,7 +458,6 @@ TEST(vplane, identifier)
 	struct ip_addr addr;
 	vplane_t *vp;
 
-	addr.af = AF_INET;
 	CHECK(inet_pton(AF_INET, v4addrstr, &addr.ip) == 1);
 
 	vplane_cfg_begin();
@@ -478,7 +475,7 @@ TEST(vplane, identifier)
 	 * but change the index. The equivalent of "moving" a dataplane
 	 * configuration (dp1 -> dp101).
 	 */
-	vplane_t *oldvp = vp;
+	const vplane_t *oldvp = vp;
 
 	vplane_cfg_begin();
 	CHECK(vplane_cfg_set_attribute(101, "uuid", vplanes[2].uuid) == PARSE_OK);
@@ -499,7 +496,6 @@ TEST(vplane, local)
 	struct ip_addr addr;
 	vplane_t *vp;
 
-	addr.af = AF_INET;
 	CHECK(inet_pton(AF_INET, addrstr, &addr.ip) == 1);
 
 	vplane_cfg_begin();

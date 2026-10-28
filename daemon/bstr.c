@@ -118,7 +118,7 @@ bool bstr_attach_unmanaged(struct bstr *bs, void *str, int str_len, int allocate
 	return bstr_attach_internal(bs, str, str_len, allocated);
 }
 
-int bstr_avail(struct bstr *bs)
+int bstr_avail(const struct bstr *bs)
 {
 	int allocated;
 
@@ -317,7 +317,7 @@ bool bstr_split_prec(struct bstr const *parent, uint8_t preceder,
 	if (!parent->len)
 		return false;
 
-	uint8_t *match = memrchr(parent->buf, preceder, parent->len);
+	const uint8_t *match = memrchr(parent->buf, preceder, parent->len);
 	if (!match)
 		return false;
 
@@ -409,7 +409,7 @@ int bstr_find_str(struct bstr const *hs, struct bstr const *nd)
 	if (!hs->len || nd->len > hs->len)
 		return -1;
 
-	uint8_t *match = memmem(hs->buf, hs->len, nd->buf, nd->len);
+	const uint8_t *match = memmem(hs->buf, hs->len, nd->buf, nd->len);
 	if (!match)
 		return -1;
 
@@ -418,7 +418,7 @@ int bstr_find_str(struct bstr const *hs, struct bstr const *nd)
 
 int bstr_find_term(struct bstr const *parent, uint8_t terminator)
 {
-	uint8_t *match = memchr(parent->buf, terminator, parent->len);
+	const uint8_t *match = memchr(parent->buf, terminator, parent->len);
 	if (!match)
 		return -1;
 

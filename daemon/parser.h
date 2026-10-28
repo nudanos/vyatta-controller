@@ -139,7 +139,7 @@ parser_set_fabric_address(struct ip_addr *addr);
  * Delete controller fabric address.
  */
 void
-parser_delete_fabric_address(struct ip_addr *addr);
+parser_delete_fabric_address(const struct ip_addr *addr);
 
 /*
  * Returns controller fabric address for given address family

@@ -244,10 +244,11 @@ static void sysctl_mpls_platform_labels(
 	const struct fs_watcher *this,
 	const struct inotify_event *event __unused)
 {
-	char action[512];
 	char val[256] = { 0 };
 
 	if (!sysctl_read_value(this->path, val, sizeof(val))) {
+		char action[512];
+
 		dbg("%s=%s", this->path, val);
 
 		snprintf(action, sizeof(action),
@@ -260,10 +261,11 @@ static void sysctl_mpls_platform_labels(
 static void sysctl_mpls_default_ttl(const struct fs_watcher *this,
 				    const struct inotify_event *event __unused)
 {
-	char action[512];
 	char val[256] = { 0 };
 
 	if (!sysctl_read_value(this->path, val, sizeof(val))) {
+		char action[512];
+
 		dbg("%s=%s", this->path, val);
 
 		snprintf(action, sizeof(action),

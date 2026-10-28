@@ -229,7 +229,7 @@ bool bstr_attach_unmanaged(struct bstr *bs, void *str, int str_len, int alloc);
  */
 
 /* How much available (unused) space does a string have */
-int bstr_avail(struct bstr *bs);
+int bstr_avail(const struct bstr *bs);
 
 /* Ensure that a string has space for extra bytes; if dynamic possibly reallocate backing buffer */
 bool bstr_grow(struct bstr *bs, int extra);

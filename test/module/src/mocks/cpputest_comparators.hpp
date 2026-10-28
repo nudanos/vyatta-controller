@@ -63,8 +63,8 @@ class AddrComparator:public MockNamedValueComparator
 public:
 	virtual bool isEqual(void *obj1, void *obj2)
 	{
-		struct ip_addr *ip1 = (struct ip_addr *)obj1;
-		struct ip_addr *ip2 = (struct ip_addr *)obj2;
+		const struct ip_addr *ip1 = static_cast<const struct ip_addr *>(obj1);
+		const struct ip_addr *ip2 = static_cast<const struct ip_addr *>(obj2);
 
 		if (ip1->af != ip2->af)
 			return false;
@@ -83,11 +83,11 @@ public:
 	}
 	virtual bool isEqual(const void *obj1, const void *obj2)
 	{
-		return isEqual((void *)obj1, (void *)obj2);
+		return isEqual(const_cast<void *>(obj1), const_cast<void *>(obj2));
 	}
 	virtual SimpleString valueToString(void *obj)
 	{
-		struct ip_addr *addr = (struct ip_addr *)obj;
+		const struct ip_addr *addr = static_cast<const struct ip_addr *>(obj);
 		char buf[INET6_ADDRSTRLEN];
 
 		return StringFrom(inet_ntop(addr->af, &(addr->ip), buf,
@@ -95,6 +95,6 @@ public:
 	}
 	virtual SimpleString valueToString(const void *obj)
 	{
-		return valueToString((void *)obj);
+		return valueToString(const_cast<void *>(obj));
 	}
 };

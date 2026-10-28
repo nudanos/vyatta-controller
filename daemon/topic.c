@@ -122,11 +122,13 @@ static char *addr_scope(int id)
 /* Call back from libmnl to store attribute */
 static int addr_attr(const struct nlattr *attr, void *data)
 {
-	const struct nlattr **tb = data;
 	unsigned int type = mnl_attr_get_type(attr);
 
-	if (type <= IFA_MAX)
+	if (type <= IFA_MAX) {
+		const struct nlattr **tb = data;
+
 		tb[type] = attr;
+	}
 
 	return MNL_CB_OK;
 }
@@ -141,7 +143,6 @@ static int address_topic(const struct nlmsghdr *nlh, char *buf, size_t len,
 	const struct ifaddrmsg *ifa = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *tb[IFA_MAX + 1] = { NULL };
 	void *addr;
-	char b1[INET6_ADDRSTRLEN];
 
 	if (!(ifa->ifa_family == AF_INET || ifa->ifa_family == AF_INET6
 	      || ifa->ifa_family == AF_UNSPEC)) {
@@ -168,10 +169,13 @@ static int address_topic(const struct nlmsghdr *nlh, char *buf, size_t len,
 	if (ifa->ifa_family == AF_UNSPEC) {
 		strcpy(addrstr, "ether ");
 		ether_ntoa_r(addr, &addrstr[6]);
-	} else
+	} else {
+		char b1[INET6_ADDRSTRLEN];
+
 		snprintf(addrstr, sizeof(addrstr), "inet %s/%d",
 			 inet_ntop(ifa->ifa_family, addr, b1, sizeof(b1)),
 			 ifa->ifa_prefixlen);
+	}
 
 	*ifindex = ifa->ifa_index;
 
@@ -184,11 +188,13 @@ static int address_topic(const struct nlmsghdr *nlh, char *buf, size_t len,
 /* Callback to store route attributes */
 static int route_attr(const struct nlattr *attr, void *data)
 {
-	const struct nlattr **tb = data;
 	unsigned int type = mnl_attr_get_type(attr);
 
-	if (type <= RTA_MAX)
+	if (type <= RTA_MAX) {
+		const struct nlattr **tb = data;
+
 		tb[type] = attr;
+	}
 	return MNL_CB_OK;
 }
 
@@ -655,7 +661,7 @@ static const char *xfrm_tunnel_mode_str(uint8_t mode)
 static void get_mark_value_and_mask(struct nlattr **tb,
 				    uint32_t *mark_value, uint32_t *mark_mask)
 {
-	struct xfrm_mark *xmark;
+	const struct xfrm_mark *xmark;
 
 	if (tb[XFRMA_MARK]) {
 		xmark = mnl_attr_get_payload(tb[XFRMA_MARK]);

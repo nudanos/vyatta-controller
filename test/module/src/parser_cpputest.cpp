@@ -15,7 +15,7 @@
 #include <arpa/inet.h>
 #include <syslog.h>
 
-#include "cpputest_comparators.h"
+#include "cpputest_comparators.hpp"
 
 extern "C" {
 

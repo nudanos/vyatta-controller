@@ -137,7 +137,7 @@ static inline void attr_free(vplane_t *vp, vp_attr_t attr)
 bool
 vplane_remote(void)
 {
-	vplane_t *vp;
+	const vplane_t *vp;
 
 	FOR_ALL_VPLANES_BYUUID(vplaneuuid, vp) {
 		if (!vplane_is_local(vp))
@@ -276,7 +276,7 @@ vplane_findbyid(int id)
 }
 
 /* Walk on all vplanes */
-void vplane_walk_all(vplane_iter_func_t func, void *arg)
+void vplane_walk_all(vplane_iter_func_t *func, void *arg)
 {
 	vplane_t *vp;
 
@@ -497,13 +497,13 @@ int vplane_iface_set_delpend(const vplane_t *vp, uint32_t ifn, bool delpend)
 	return -1;
 }
 
-void vplane_iface_iterate(const vplane_t *vp, vplane_iface_iter_func_t func,
+void vplane_iface_iterate(const vplane_t *vp, vplane_iface_iter_func_t *func,
 			  void *arg)
 {
 	uint32_t iface;
 
 	for (iface = 0; iface < MAX_PORTS; iface++) {
-		vplaneif_t *vpif;
+		const vplaneif_t *vpif;
 
 		vpif = vp->interfaces[iface];
 		if (vpif != NULL)
@@ -702,7 +702,7 @@ vplane_zeromq_delete(void *arg)
 static void
 vplane_insert(zhash_t *hash, vplane_t *vp)
 {
-	vplane_t *tmp;
+	const vplane_t *tmp;
 
 	if ((vp == NULL) ||
 	    (vp->attr[VP_ATTR_UUID] == NULL))
@@ -997,7 +997,6 @@ vplane_if_to_json(vplaneif_t *vpif)
 static json_object *
 vplane_to_json(vplane_t *vp)
 {
-	char addr[INET6_ADDRSTRLEN];
 	int iface;
 	json_object *jobj = json_object_new_object();
 
@@ -1016,6 +1015,8 @@ vplane_to_json(vplane_t *vp)
 			       json_object_new_boolean(vp->delpend));
 
 	if (vplane_is_local(vp)) {
+		char addr[INET6_ADDRSTRLEN];
+
 		json_object_object_add(jobj, "ctladdr",
 				json_object_new_string(inet_ntop(vp->ctladdr.af,
 								&vp->ctladdr.ip,

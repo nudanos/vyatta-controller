@@ -126,7 +126,7 @@ static int zmsg_popaddr(zmsg_t *msg, struct ip_addr *addr)
 {
 	zframe_t *frame = zmsg_pop(msg);
 	size_t fsz;
-	void *data;
+	const void *data;
 	int rc = 0;
 
 	if (frame == NULL) {
@@ -340,7 +340,7 @@ static const char * const virtual_ifprefix[] = { "br", "erspan", "tun", "vti" };
 /*
  * Delete 'clear' stat files of virtual interfaces resident in the dataplane.
  */
-static void del_virtual_intf_stat_files(char *file_name)
+static void del_virtual_intf_stat_files(const char *file_name)
 {
 	char stats_file[PATH_MAX];
 	int if_cnt = sizeof(virtual_ifprefix)/sizeof(*virtual_ifprefix);
@@ -363,14 +363,13 @@ static void del_virtual_intf_stat_files(char *file_name)
  * CLI command is issued. Stale counter values must be deleted when
  * dataplane restarts.
  */
-static void cleanup_stats(vplane_t *vp)
+static void cleanup_stats(const vplane_t *vp)
 {
 	char fprefix[8];
 	char dpid[8];
 	char stats_file[PATH_MAX];
 	DIR *dir;
 	struct dirent *dent;
-	char *fextn;
 
 	snprintf(fprefix, sizeof(fprefix), "dp%d", vplane_get_id(vp));
 	snprintf(dpid, sizeof(dpid), ".dp%d.", vplane_get_id(vp));
@@ -378,7 +377,7 @@ static void cleanup_stats(vplane_t *vp)
 	if (dir == NULL)
 		return;
 	while ((dent = readdir(dir))) {
-		fextn = strrchr(dent->d_name, '.');
+		const char *fextn = strrchr(dent->d_name, '.');
 		if (fextn == NULL)
 			continue;
 		if (strncmp(fextn, ".stats", 6) != 0)
@@ -394,7 +393,7 @@ static void cleanup_stats(vplane_t *vp)
 	closedir(dir);
 }
 
-static int connect_accept(request_t *req, vplane_t *vp)
+static int connect_accept(request_t *req, const vplane_t *vp)
 {
 	zmsg_t *msg = zmsg_new();
 	uint16_t id;
@@ -463,10 +462,8 @@ struct connect_errors {
 
 static void connect_error_clear(void)
 {
-	int i;
-
 	if (con_errs != NULL) {
-		for (i = 0; i < CONNECT_ERROR_LIST; i++)
+		for (int i = 0; i < CONNECT_ERROR_LIST; i++)
 			free(con_errs->uuid[i]);
 		free(con_errs);
 		con_errs = NULL;
@@ -511,7 +508,7 @@ static int connect_get_json_errors(const char *topic __unused,
 				   zmsg_t *msg __unused,
 				   char **json)
 {
-	int i, j;
+	int i;
 
 	if (con_errs == NULL)
 		return 0;
@@ -526,7 +523,7 @@ static int connect_get_json_errors(const char *topic __unused,
 
 	for (i = con_errs->next;
 	     i < (con_errs->next + CONNECT_ERROR_LIST); i++) {
-		j = i % CONNECT_ERROR_LIST;
+		int j = i % CONNECT_ERROR_LIST;
 		if (con_errs->recent[j] == CONNECT_ERROR_NONE)
 			continue;
 
@@ -639,13 +636,12 @@ static int connect_request(request_t *req, zmsg_t *msg)
 static int conf_request(request_t *req, zmsg_t *req_msg __unused)
 {
 	zmsg_t *msg = zmsg_new();
-	int rc;
 	char buf[64];
 
 	const char *cur_ep = parser_endpoint_publish_bound();
 
 	if (msg != NULL) {
-		rc = zmsg_addstr(msg, "PUBLISH");
+		int rc = zmsg_addstr(msg, "PUBLISH");
 		if (rc == 0) {
 			info("sending publisher URL %s", cur_ep);
 			rc = zmsg_addstr(msg, cur_ep);
@@ -1327,6 +1323,7 @@ static int snapshot_request(request_t *req, zmsg_t *msg __unused)
 }
 
 static int snapshot_req_timeout_handle_event(
+	// cppcheck-suppress constParameterCallback ; reason: czmq's zloop_timer_fn type fixes the signature
 	zloop_t *loop __unused, int timerid __unused, void *arg __unused)
 {
 	logit(LOG_WARNING, 'W',
@@ -1585,8 +1582,6 @@ static void authentication_disable(zsock_t *socket)
 void authentication_enable(zsock_t *socket)
 {
 	zcert_t *cert;
-	char *time;
-	char ip[INET6_ADDRSTRLEN];
 
 	if ((parser_authentication_certificate() == NULL) ||
 	    (parser_authentication_path() == NULL))
@@ -1595,6 +1590,8 @@ void authentication_enable(zsock_t *socket)
 	cert = zcert_load(parser_authentication_certificate());
 	if (cert == NULL) {
 		const struct ip_addr *addr = parser_local_addr();
+		char *time;
+		char ip[INET6_ADDRSTRLEN];
 
 		cert = zcert_new();
 		if (cert == NULL)

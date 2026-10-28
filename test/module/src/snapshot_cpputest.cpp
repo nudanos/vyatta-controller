@@ -24,7 +24,7 @@
 
 #include <czmq.h>
 #include "stubs.h"
-#include "cpputest_comparators.h"
+#include "cpputest_comparators.hpp"
 
 extern "C" {
 
@@ -43,12 +43,14 @@ extern "C" {
 
 #define S_TOPIC_BUFSIZ 128
 
+// cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 void team_msg_data_free(struct team_msg_desc *desc)
 {
 	CPPUTEST_STUB_RET;
 }
 
 int process_genetlink_teamcmd(const struct nlmsghdr *nlh,
+			      // cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 			      struct team_msg_desc *desc)
 {
 	CPPUTEST_STUB_RET_VAL(-1);
@@ -64,6 +66,7 @@ void fsnotify_add_redirects_watchers(void)
 	CPPUTEST_STUB_RET;
 }
 
+// cppcheck-suppress constParameterPointer ; reason: a mock must match the real prototype
 void nl_propagate_nlmsg(nlmsg_t *nmsg)
 {
 	CPPUTEST_STUB_RET;
@@ -110,7 +113,7 @@ static int snap_update(snapshot_t *snap, const char *topic,
 static void snap_complete(snapshot_t *snap)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
-	struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
+	const struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
 
 	CHECK(snap_update(snap, "INIT COMPLETE", nlh) == 1);
 }
@@ -127,7 +130,7 @@ static void snap_end(snapshot_t *snap)
 
 static void snap_collect_free(void *m)
 {
-	zmsg_t *msg = (zmsg_t *)m;
+	zmsg_t *msg = static_cast<zmsg_t *>(m);
 
 	zmsg_destroy(&msg);
 }
@@ -193,7 +196,7 @@ static int snap_check_msg(zlist_t *list, const char *topic)
 	     nlmsg = zlist_next(list)) {
 		zframe_t *fr;
 
-		fr = zmsg_first((zmsg_t *)nlmsg);
+		fr = zmsg_first(reinterpret_cast<zmsg_t *>(nlmsg));
 		if (zframe_streq(fr, topic)) {
 			found++;
 			zlist_remove(list, nlmsg);
@@ -258,7 +261,6 @@ static void route_nexthop(struct s_route *route, const char *s, int ifindex)
 static void route_netlink_mpath(struct s_route *route, struct nlmsghdr *nlh)
 {
 	struct s_nexthop *nh;
-	struct rtnexthop *rtnh;
 	int i;
 
 	for (i = 0; i < route->nh_cnt; i++) {
@@ -269,16 +271,16 @@ static void route_netlink_mpath(struct s_route *route, struct nlmsghdr *nlh)
 		 */
 		CHECK(route->prefix.addr.af == nh->nh_addr.af);
 
-		rtnh = (struct rtnexthop *)
-			mnl_nlmsg_get_payload_tail(nlh);
+		struct rtnexthop *rtnh = static_cast<struct rtnexthop *>(
+			mnl_nlmsg_get_payload_tail(nlh));
 		nlh->nlmsg_len += MNL_ALIGN(sizeof(*rtnh));
 		memset(rtnh, 0, sizeof(*rtnh));
 		rtnh->rtnh_ifindex = nh->nh_ifindex;
 		mnl_attr_put_u32(nlh, RTA_OIF, nh->nh_ifindex);
 		mnl_attr_put(nlh, RTA_GATEWAY, route_addr_size(&nh->nh_addr),
 			     &nh->nh_addr.ip);
-		rtnh->rtnh_len = ((char *)mnl_nlmsg_get_payload_tail(
-					  nlh) - (char *)rtnh);
+		rtnh->rtnh_len = static_cast<char *>(mnl_nlmsg_get_payload_tail(nlh))
+			- reinterpret_cast<char *>(rtnh);
 	}
 }
 
@@ -306,7 +308,7 @@ route_netlink(struct s_route *route, int type, bool replace,
 	if (replace)
 		nlh->nlmsg_flags |= NLM_F_REPLACE;
 
-	rtm = (struct rtmsg *)mnl_nlmsg_put_extra_header(nlh, sizeof(struct rtmsg));
+	rtm = static_cast<struct rtmsg *>(mnl_nlmsg_put_extra_header(nlh, sizeof(struct rtmsg)));
 	rtm->rtm_family = route->prefix.addr.af;
 	rtm->rtm_dst_len = route->prefix.len;
 	rtm->rtm_src_len = 0;
